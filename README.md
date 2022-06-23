@@ -1,16 +1,44 @@
-# no_money
+# No Money
 
-A new Flutter project.
+A web application for you to record your income and expenditure.
 
-## Getting Started
+## Build
 
-This project is a starting point for a Flutter application.
+You need flutter installed already. If you dont, please follow this link: [Flutter Installation](https://flutter.dev/docs/get-started/install)
 
-A few resources to get you started if this is your first Flutter project:
+### Install dependencies
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+```bash
+git clone https://github.com/nohackjustnoobb/No-Money.git
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+cd No-Money && flutter pub get
+```
+
+### Build for different platform
+
+<i>Although it can build for different platforms, only the web version will be maintenance.</i>
+
+#### Web
+
+```bash
+flutter build web --web-renderer canvaskit
+```
+
+#### iOS
+
+<i>macOS and Xcode is required.</br></i>
+You may need to open the file `ios/Runner.xcworkspace` to sign it.
+
+```bash
+flutter build ios
+```
+
+#### Android
+
+<i>Android Studio and its SDK is required.</i>
+
+```bash
+flutter build apk
+```
