@@ -3,13 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../classes/classes.dart';
-import '../utils.dart';
+import '../utils/utils.dart';
 
+// ignore: must_be_immutable
 class AddRecord extends StatefulWidget {
-  const AddRecord({Key? key}) : super(key: key);
+  Record? record;
+
+  AddRecord({Key? key, this.record}) : super(key: key);
 
   @override
   State<AddRecord> createState() => AddRecordState();
@@ -22,6 +26,19 @@ class AddRecordState extends State<AddRecord> {
   TextEditingController remarkController = TextEditingController();
   String amount = '';
   DateTime? datetime;
+
+  @override
+  void initState() {
+    if (widget.record != null) {
+      selectedType = widget.record!.type;
+      remarkController.text = widget.record!.remark ?? '';
+      amount = widget.record!.amount.toString();
+      datetime = widget.record!.dateTime;
+      isExpenditure = !widget.record!.type.isIncome;
+    }
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,8 +90,19 @@ class AddRecordState extends State<AddRecord> {
 
                         String? remark = remarkController.text == '' ? null : remarkController.text;
 
-                        context.read<Records>().add(
-                            amount: doubleAmount, typeName: selectedType!.name, dateTime: datetime, remark: remark);
+                        Records records = context.read<Records>();
+                        if (widget.record == null) {
+                          records.add(
+                              amount: doubleAmount, typeName: selectedType!.name, dateTime: datetime, remark: remark);
+                        } else {
+                          records.edit(
+                              id: widget.record!.id,
+                              amount: doubleAmount,
+                              typeName: selectedType!.name,
+                              dateTime: datetime,
+                              remark: remark);
+                        }
+
                         Navigator.pop(context);
                       },
                       child: const Icon(
@@ -152,7 +180,6 @@ class AddRecordState extends State<AddRecord> {
                                     borderRadius: BorderRadius.circular(15),
                                     child: TextField(
                                       controller: remarkController,
-                                      cursorColor: Theme.of(context).secondaryHeaderColor,
                                       style: TextStyle(
                                           fontSize: 18,
                                           color: Theme.of(context).primaryColor,
@@ -171,7 +198,7 @@ class AddRecordState extends State<AddRecord> {
                                     padding: const EdgeInsets.only(left: 15),
                                     child: CupertinoButton(
                                       padding: EdgeInsets.zero,
-                                      onPressed: () => showModalBottomSheet(
+                                      onPressed: () => showCupertinoModalBottomSheet(
                                         context: context,
                                         builder: (BuildContext context) => Container(
                                           color: Theme.of(context).backgroundColor,
@@ -184,7 +211,8 @@ class AddRecordState extends State<AddRecord> {
                                                   CupertinoButton(
                                                     padding: const EdgeInsets.only(left: 15),
                                                     onPressed: () {
-                                                      setState(() => datetime = null);
+                                                      setState(() => datetime =
+                                                          widget.record == null ? null : widget.record!.dateTime);
                                                       Navigator.pop(context);
                                                     },
                                                     child: Text(
@@ -210,7 +238,7 @@ class AddRecordState extends State<AddRecord> {
                                                   ),
                                                   child: CupertinoDatePicker(
                                                     backgroundColor: Theme.of(context).backgroundColor,
-                                                    initialDateTime: DateTime.now(),
+                                                    initialDateTime: datetime ?? DateTime.now(),
                                                     maximumDate: DateTime.now(),
                                                     mode: CupertinoDatePickerMode.dateAndTime,
                                                     onDateTimeChanged: (DateTime newTime) {

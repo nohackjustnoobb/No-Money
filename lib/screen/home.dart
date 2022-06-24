@@ -8,8 +8,10 @@ import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
 
 import '../classes/classes.dart';
-import '../utils.dart';
+import '../utils/utils.dart';
+import '../utils/date_picker.dart' as date_picker;
 import 'add_record.dart';
+import 'settings.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);
@@ -40,7 +42,8 @@ class HomeState extends State<Home> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 CupertinoButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (BuildContext context) => const Settings())),
                   child: Icon(
                     MdiIcons.cog,
                     color: Theme.of(context).bottomAppBarColor,
@@ -48,12 +51,73 @@ class HomeState extends State<Home> {
                   ),
                 ),
                 CupertinoButton(
-                  onPressed: () {},
+                  onPressed: () => showCupertinoModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext context) {
+                      date ??= DateTime.now();
+
+                      return Material(
+                        child: WillPopScope(
+                          onWillPop: () async {
+                            setState(() {});
+                            return true;
+                          },
+                          child: Container(
+                            color: Theme.of(context).backgroundColor,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    CupertinoButton(
+                                      padding: const EdgeInsets.only(left: 15),
+                                      onPressed: () {
+                                        setState(() => date = null);
+                                        Navigator.pop(context);
+                                      },
+                                      child: Text(
+                                        AppLocalizations.of(context)!.allMonths,
+                                        style: const TextStyle(color: Colors.redAccent),
+                                      ),
+                                    ),
+                                    CupertinoButton(
+                                      padding: const EdgeInsets.only(right: 15),
+                                      onPressed: () => setState(() => Navigator.pop(context)),
+                                      child: Text(
+                                        AppLocalizations.of(context)!.confirm,
+                                        style: const TextStyle(color: Colors.green),
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: MediaQuery.of(context).size.height * .5,
+                                  child: CupertinoTheme(
+                                    data: CupertinoThemeData(
+                                      brightness: Theme.of(context).brightness,
+                                    ),
+                                    child: date_picker.CupertinoDatePicker(
+                                        backgroundColor: Theme.of(context).backgroundColor,
+                                        initialDateTime: date,
+                                        maximumDate: DateTime.now(),
+                                        mode: date_picker.CupertinoDatePickerMode.date,
+                                        onDateTimeChanged: (DateTime newTime) => date = newTime),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   child: Row(
                     children: [
                       Text(
-                        date == null ? AppLocalizations.of(context)!.allMonths : '${date!.year}-${date!.month}',
-                        style: TextStyle(color: Theme.of(context).bottomAppBarColor, fontSize: 18),
+                        date == null ? AppLocalizations.of(context)!.allMonths : DateFormat("yyyy-MM").format(date!),
+                        style: TextStyle(
+                            color: Theme.of(context).bottomAppBarColor, fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       Icon(
                         MdiIcons.menuDown,
@@ -78,18 +142,16 @@ class HomeState extends State<Home> {
       ));
 
   String? locale;
-  DateTime? date;
+  DateTime? date = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
     String? selectedLocale = context.read<LocaleModel>().selectedLocale;
 
-    if (locale == null || selectedLocale != locale) {
-      locale = selectedLocale;
-
-      Client client = context.read<Client>();
-      client.types.initialize(context);
-      client.initialize();
+    if (locale == null ||
+        (selectedLocale != locale && (selectedLocale != null || LocaleModel.defaultLocale.languageCode != locale))) {
+      locale = selectedLocale ?? LocaleModel.defaultLocale.languageCode;
+      context.read<Client>().initialize(context);
     }
 
     return Scaffold(
@@ -97,7 +159,7 @@ class HomeState extends State<Home> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: CupertinoButton(
         onPressed: () =>
-            showCupertinoModalBottomSheet(context: context, builder: (BuildContext context) => const AddRecord()),
+            showCupertinoModalBottomSheet(context: context, builder: (BuildContext context) => AddRecord()),
         child: Container(
             width: 65,
             height: 65,
@@ -124,9 +186,7 @@ class HomeState extends State<Home> {
             }
 
             double value = expenditure > income
-                ? expenditure == 0
-                    ? 0
-                    : 1 - (income / expenditure)
+                ? 1 - (income / expenditure)
                 : income == 0
                     ? 0
                     : 1 - (expenditure / income);
@@ -298,7 +358,11 @@ class HomeState extends State<Home> {
                                 motion: const ScrollMotion(),
                                 children: [
                                   SlidableAction(
-                                    onPressed: (_) {},
+                                    onPressed: (_) => showCupertinoModalBottomSheet(
+                                        context: context,
+                                        builder: (BuildContext context) => AddRecord(
+                                              record: record,
+                                            )),
                                     backgroundColor: Theme.of(context).primaryColor,
                                     foregroundColor: Theme.of(context).bottomAppBarColor,
                                     icon: MdiIcons.pencil,
@@ -338,10 +402,32 @@ class HomeState extends State<Home> {
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                record.type.displayName,
-                                                style: TextStyle(
-                                                    fontWeight: FontWeight.bold, color: Theme.of(context).primaryColor),
+                                              Row(
+                                                crossAxisAlignment: CrossAxisAlignment.end,
+                                                children: [
+                                                  Text(
+                                                    record.type.displayName,
+                                                    style: TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Theme.of(context).primaryColor),
+                                                  ),
+                                                  if (record.remark != null)
+                                                    ConstrainedBox(
+                                                      constraints: BoxConstraints(
+                                                          maxWidth: MediaQuery.of(context).size.width / 3),
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.only(bottom: 2, left: 3),
+                                                        child: Text(
+                                                          record.remark!,
+                                                          overflow: TextOverflow.ellipsis,
+                                                          style: TextStyle(
+                                                              fontWeight: FontWeight.bold,
+                                                              fontSize: 10,
+                                                              color: Theme.of(context).primaryColor.withOpacity(.8)),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
                                               Text(
                                                 dateString,

@@ -25,5 +25,20 @@
   "delete": "刪除",
   "edit": "編輯",
   "cancel": "取消",
-  "deleteConfirm": "您確定要刪除這條記錄嗎？"
+  "deleteConfirm": "您確定要刪除這條記錄嗎？",
+  "back": "返回",
+  "settings": "設定",
+  "themeColor": "主題顏色",
+  "selectColorShade": "選擇顏色陰影",
+  "clickToEdit": "點擊更改",
+  "darkMode": "黑暗模式",
+  "lightMode": "光亮模式",
+  "appearance": "外觀",
+  "sameAsSystem": "與系統相同 (主題模式)",
+  "languages": "語言",
+  "customizeType": "自定義類型",
+  "addSomeCustomType": "添加一些自定義類型!!",
+  "typeName": "類型名稱",
+  "noIcon": "沒有圖標",
+  "nameError": "名稱不能留空"
 }

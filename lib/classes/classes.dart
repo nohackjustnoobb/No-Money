@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
@@ -9,11 +10,12 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'record.dart';
 
 class Client extends ChangeNotifier {
-  Types types = Types();
+  late Types types;
   Records records = Records();
 
-  void initialize() {
-    records.initialize(types);
+  void initialize(BuildContext context) async {
+    types.initialize(context);
+    await records.initialize(types);
   }
 }
 
@@ -74,7 +76,7 @@ class Types extends ChangeNotifier {
       types.addition.addAll(rawData.map((e) => Type.fromMap(jsonDecode(e))));
     }
 
-    return Types();
+    return types;
   }
 
   Future<bool> save() async {
@@ -97,6 +99,24 @@ class Types extends ChangeNotifier {
     if (all.where((e) => e.name == name).isNotEmpty) return false;
 
     addition.add(Type(iconName: iconName, name: name, isIncome: isIncome, displayName: name));
+    notifyListeners();
+    return await save();
+  }
+
+  Future<bool> edit(
+      {required String name, required String iconName, required bool isIncome, required String oldName}) async {
+    if (all.where((e) => e.name == name).isNotEmpty && name != oldName) return false;
+    List<Type> types = all.where((e) => e.name == oldName).toList();
+
+    if (types.isEmpty) return false;
+    Type type = types.first;
+
+    type.name = name;
+    type.displayName = name;
+    type.iconName = iconName;
+    type.icon = MdiIcons.fromString(iconName) ?? MdiIcons.alertRhombus;
+    type.isIncome = isIncome;
+
     notifyListeners();
     return await save();
   }
@@ -133,7 +153,7 @@ class Records extends ChangeNotifier {
 
   List<Record> all = [];
 
-  void initialize(Types types) async {
+  Future<void> initialize(Types types) async {
     await Hive.close();
     all = [];
 
@@ -164,11 +184,12 @@ class Records extends ChangeNotifier {
   bool add({required double amount, required String typeName, String? remark, DateTime? dateTime}) {
     if (isInitialize) {
       Record record = Record(
-          amount: amount,
-          type: types.get(name: typeName) ?? types.other,
-          remark: remark,
-          dateTime: dateTime,
-          id: all.isEmpty ? 1 : all.last.id + 1);
+        amount: amount,
+        type: types.get(name: typeName) ?? types.other,
+        remark: remark,
+        dateTime: dateTime,
+        id: all.isEmpty ? 1 : all.map((e) => e.id).reduce(max) + 1,
+      );
 
       all.add(record);
       box!.put(record.id, record.toSRecord());
@@ -206,7 +227,13 @@ class Records extends ChangeNotifier {
 
 class ThemeModel extends ChangeNotifier {
   late Color themeColor;
-  late bool isDark;
+  bool? isDark;
+
+  ThemeMode get themeMode => isDark == null
+      ? ThemeMode.system
+      : isDark!
+          ? ThemeMode.dark
+          : ThemeMode.light;
 
   static const defaultColor = Color(0xFFFFCECE);
 
@@ -217,7 +244,7 @@ class ThemeModel extends ChangeNotifier {
 
     ThemeModel themeModel = ThemeModel();
     themeModel.themeColor = themeColor == null ? defaultColor : Color(themeColor);
-    themeModel.isDark = isDark ?? false;
+    themeModel.isDark = isDark;
 
     return themeModel;
   }
@@ -232,10 +259,19 @@ class ThemeModel extends ChangeNotifier {
   }
 
   Future<void> toggleDarkTheme() async {
-    isDark == !isDark;
+    isDark = !(isDark ?? true);
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isDark', isDark);
+    prefs.setBool('isDark', isDark!);
+
+    notifyListeners();
+  }
+
+  Future<void> removeDarkTheme() async {
+    isDark = null;
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('isDark');
 
     notifyListeners();
   }

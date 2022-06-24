@@ -1,6 +1,6 @@
 # No Money
 
-A web application for you to record your income and expenditure.
+A web application for recording income and expenditure.
 
 ## Build
 

@@ -24,5 +24,20 @@
   "delete": "Delete",
   "edit": "Edit",
   "cancel": "Cancel",
-  "deleteConfirm": "Are you sure to delete this record?"
+  "deleteConfirm": "Are you sure to delete this record?",
+  "back": "Back",
+  "settings": "Settings",
+  "themeColor": "Theme Color",
+  "selectColorShade": "Select color shade",
+  "clickToEdit": "Click To Edit",
+  "darkMode": "Dark Mode",
+  "lightMode": "Light Mode",
+  "appearance": "Appearance",
+  "sameAsSystem": "Same As System (Theme Mode)",
+  "languages": "Languages",
+  "customizeType": "Customize Type",
+  "addSomeCustomType": "Add Some Custom Type!!",
+  "typeName": "Type Name",
+  "noIcon": "No Icon",
+  "nameError": "Name can't be empty"
 }
