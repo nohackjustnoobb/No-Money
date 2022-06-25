@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -8,14 +9,17 @@ import 'classes/record.dart';
 import 'screen/home.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
+  await Hive.initFlutter();
   Hive.registerAdapter(SRecordAdapter());
   ThemeModel themeModel = await ThemeModel.read();
   LocaleModel localeModel = await LocaleModel.read();
   Client client = Client();
   client.types = await Types.read();
+
+  FlutterNativeSplash.remove();
 
   runApp(MultiProvider(
     providers: [

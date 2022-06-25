@@ -11,6 +11,7 @@ import '../classes/classes.dart';
 import '../utils/utils.dart';
 import '../utils/date_picker.dart' as date_picker;
 import 'add_record.dart';
+import 'analysis.dart';
 import 'settings.dart';
 
 class Home extends StatefulWidget {
@@ -128,7 +129,10 @@ class HomeState extends State<Home> {
                   ),
                 ),
                 CupertinoButton(
-                  onPressed: () {},
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (BuildContext context) => Analysis(
+                            date: date,
+                          ))),
                   child: Icon(
                     MdiIcons.chartPie,
                     color: Theme.of(context).bottomAppBarColor,
@@ -178,7 +182,7 @@ class HomeState extends State<Home> {
           padding: const EdgeInsets.only(top: 15),
           child: Consumer<Records>(builder: (context, records, child) {
             List<Record> data = records.get(date);
-            data.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+            data.sort((a, b) => b.datetime.compareTo(a.datetime));
 
             double income = 0, expenditure = 0;
             for (Record r in data) {
@@ -336,7 +340,7 @@ class HomeState extends State<Home> {
                         itemCount: data.length,
                         itemBuilder: (BuildContext context, index) {
                           Record record = data.toList()[index];
-                          DateTime dateTime = record.dateTime;
+                          DateTime dateTime = record.datetime;
 
                           DateTime now = DateTime.now();
                           DateTime today = DateTime(now.year, now.month, now.day);

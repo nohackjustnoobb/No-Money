@@ -1,8 +1,8 @@
 {
   "income": "收入",
   "expenditure": "支出",
-  "otherI": "其他 ",
-  "other": "其他",
+  "otherExpenditure": "其他(支出)",
+  "otherIncome": "其他(收入)",
   "diet": "飲食",
   "clothes": "衣服",
   "live": "居住",
@@ -40,5 +40,10 @@
   "addSomeCustomType": "添加一些自定義類型!!",
   "typeName": "類型名稱",
   "noIcon": "沒有圖標",
-  "nameError": "名稱不能留空"
+  "nameError": "名稱不能留空",
+  "analysis": "分析",
+  "export": "輸出",
+  "total": "總額",
+  "noRecord": "沒有記錄",
+  "records": "記錄"
 }

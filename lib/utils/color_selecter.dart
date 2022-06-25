@@ -25,6 +25,7 @@ class ColorSelecterState extends State<ColorSelecter> {
       color: Theme.of(context).backgroundColor,
       child: SafeArea(
           top: false,
+          minimum: const EdgeInsets.only(bottom: 20),
           child: SingleChildScrollView(
             physics: const NeverScrollableScrollPhysics(),
             child: Stack(children: [

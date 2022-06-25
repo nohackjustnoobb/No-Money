@@ -4,6 +4,7 @@ import 'package:material_design_icons_flutter/material_design_icons_flutter.dart
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../classes/classes.dart';
 import '../utils/color_selecter.dart';
@@ -345,6 +346,24 @@ class _SettingsState extends State<Settings> {
                           ),
                   ),
                 ),
+              ),
+              FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Text(
+                        'No-Money\nv${snapshot.data!.version}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            color: Theme.of(context).primaryColor.withOpacity(.7), fontWeight: FontWeight.bold),
+                      ),
+                    );
+                  }
+
+                  return Container();
+                },
               )
             ],
           )),

@@ -33,7 +33,7 @@ class AddRecordState extends State<AddRecord> {
       selectedType = widget.record!.type;
       remarkController.text = widget.record!.remark ?? '';
       amount = widget.record!.amount.toString();
-      datetime = widget.record!.dateTime;
+      datetime = widget.record!.datetime;
       isExpenditure = !widget.record!.type.isIncome;
     }
 
@@ -143,6 +143,7 @@ class AddRecordState extends State<AddRecord> {
                                     child: Text(
                                       type.displayName,
                                       textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
                                           color: Theme.of(context).primaryColor.withOpacity(.8), fontSize: 14),
                                     ),
@@ -212,7 +213,7 @@ class AddRecordState extends State<AddRecord> {
                                                     padding: const EdgeInsets.only(left: 15),
                                                     onPressed: () {
                                                       setState(() => datetime =
-                                                          widget.record == null ? null : widget.record!.dateTime);
+                                                          widget.record == null ? null : widget.record!.datetime);
                                                       Navigator.pop(context);
                                                     },
                                                     child: Text(

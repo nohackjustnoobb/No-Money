@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.no_money">
+    package="com.example.nomoney">
    <application
-        android:label="no_money"
+        android:label="nomoney"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

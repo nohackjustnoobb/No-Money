@@ -1,7 +1,8 @@
 {
   "income": "Income",
   "expenditure": "Expenditure",
-  "other": "Other",
+  "otherExpenditure": "Other(Expenditure)",
+  "otherIncome": "Other(Income)",
   "diet": "Diet",
   "clothes": "Clothes",
   "live": "Live",
@@ -39,5 +40,10 @@
   "addSomeCustomType": "Add Some Custom Type!!",
   "typeName": "Type Name",
   "noIcon": "No Icon",
-  "nameError": "Name can't be empty"
+  "nameError": "Name can't be empty",
+  "analysis": "Analysis",
+  "export": "Export",
+  "total": "Total",
+  "noRecord": "No Record",
+  "records": "Records"
 }

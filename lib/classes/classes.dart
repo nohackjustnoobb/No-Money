@@ -1,12 +1,18 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:collection';
+import 'dart:typed_data';
 
+import 'package:file_saver/file_saver.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 
+import '../screen/analysis.dart';
 import 'record.dart';
 
 class Client extends ChangeNotifier {
@@ -42,16 +48,16 @@ class Types extends ChangeNotifier {
   void initialize(BuildContext context) {
     Map<String, Map<String, Map<String, String>>> defaultTypesMap = {
       'income': {
-        'salary': {AppLocalizations.of(context)!.salary: 'cashMultiple'},
-        'otherI': {AppLocalizations.of(context)!.other: 'dotsHorizontalCircle'},
+        'Salary': {AppLocalizations.of(context)!.salary: 'cashMultiple'},
+        'Other(Income)': {AppLocalizations.of(context)!.otherIncome: 'dotsHorizontalCircle'},
       },
       'expenditure': {
-        'clothes': {AppLocalizations.of(context)!.clothes: 'tshirtCrew'},
-        'diet': {AppLocalizations.of(context)!.diet: 'food'},
-        'live': {AppLocalizations.of(context)!.live: 'homeCity'},
-        'transport': {AppLocalizations.of(context)!.transport: 'trainCar'},
-        'entertainment': {AppLocalizations.of(context)!.entertainment: 'googleController'},
-        'other': {AppLocalizations.of(context)!.other: 'dotsHorizontalCircle'},
+        'Clothes': {AppLocalizations.of(context)!.clothes: 'tshirtCrew'},
+        'Diet': {AppLocalizations.of(context)!.diet: 'food'},
+        'Live': {AppLocalizations.of(context)!.live: 'homeCity'},
+        'Transport': {AppLocalizations.of(context)!.transport: 'trainCar'},
+        'Entertainment': {AppLocalizations.of(context)!.entertainment: 'googleController'},
+        'Other(expenditure)': {AppLocalizations.of(context)!.otherExpenditure: 'dotsHorizontalCircle'},
       }
     };
 
@@ -80,8 +86,6 @@ class Types extends ChangeNotifier {
   }
 
   Future<bool> save() async {
-    if (addition.isEmpty) return false;
-
     SharedPreferences prefs = await SharedPreferences.getInstance();
     List<String> rawData = addition.map((e) => jsonEncode(e.toMap())).toList();
     return await prefs.setStringList('types', rawData);
@@ -122,10 +126,10 @@ class Types extends ChangeNotifier {
   }
 
   Future<bool> delete(String name) async {
-    List<Type> type = addition.where((e) => e.name == name).toList();
-    if (type.isEmpty) return false;
+    List<Type> types = addition.where((e) => e.name == name).toList();
+    if (types.isEmpty) return false;
 
-    addition.remove(type.first);
+    addition.remove(types.first);
     notifyListeners();
     return await save();
   }
@@ -136,12 +140,12 @@ class Record {
   double amount;
   Type type;
   int id;
-  DateTime dateTime;
+  DateTime datetime;
 
   Record({required this.amount, required this.type, required this.id, DateTime? dateTime, this.remark})
-      : dateTime = dateTime ?? DateTime.now();
+      : datetime = dateTime ?? DateTime.now();
 
-  SRecord toSRecord() => SRecord(amount: amount, typeName: type.name, dateTime: dateTime, remark: remark);
+  SRecord toSRecord() => SRecord(amount: amount, typeName: type.name, dateTime: datetime, remark: remark);
 }
 
 class Records extends ChangeNotifier {
@@ -210,7 +214,7 @@ class Records extends ChangeNotifier {
       record.amount = amount ?? record.amount;
       record.type = typeName != null ? types.get(name: typeName) ?? record.type : record.type;
       record.remark = remark ?? record.remark;
-      record.dateTime = dateTime ?? record.dateTime;
+      record.datetime = dateTime ?? record.datetime;
 
       box!.put(record.id, record.toSRecord());
 
@@ -222,7 +226,154 @@ class Records extends ChangeNotifier {
   }
 
   List<Record> get(DateTime? date) =>
-      date != null ? all.where((e) => e.dateTime.month == date.month && e.dateTime.year == date.year).toList() : all;
+      date != null ? all.where((e) => e.datetime.month == date.month && e.datetime.year == date.year).toList() : all;
+
+  Future<void> generateWorkbook(BuildContext context) async {
+    Workbook workbook = Workbook(0);
+
+    SplayTreeMap<int, SplayTreeMap<int, SplayTreeMap<int, List<Data>>>> dataset =
+        SplayTreeMap<int, SplayTreeMap<int, SplayTreeMap<int, List<Data>>>>();
+
+    for (Record record in all) {
+      if (!dataset.containsKey(record.datetime.year)) {
+        dataset[record.datetime.year] = SplayTreeMap<int, SplayTreeMap<int, List<Data>>>();
+      }
+      if (!dataset[record.datetime.year]!.containsKey(record.datetime.month)) {
+        dataset[record.datetime.year]![record.datetime.month] = SplayTreeMap<int, List<Data>>();
+      }
+      if (!dataset[record.datetime.year]![record.datetime.month]!.containsKey(record.datetime.day)) {
+        dataset[record.datetime.year]![record.datetime.month]![record.datetime.day] = [];
+      }
+
+      try {
+        Data data = dataset[record.datetime.year]![record.datetime.month]![record.datetime.day]!
+            .firstWhere((e) => e.type == record.type.displayName);
+        data.amount += record.type.isIncome ? record.amount : -record.amount;
+      } catch (e) {
+        dataset[record.datetime.year]![record.datetime.month]![record.datetime.day]!
+            .add(Data(type: record.type.displayName, amount: record.type.isIncome ? record.amount : -record.amount));
+      }
+    }
+
+    CellStyle style = CellStyle(workbook);
+    style.hAlign = HAlignType.center;
+    workbook.styles.addStyle(style);
+
+    dataset.forEach((year, yearData) {
+      Worksheet sheet = workbook.worksheets.addWithName('$year');
+      sheet.setColumnWidthInPixels(1, 150);
+      SplayTreeMap<int, Map<String, int>> dataPosition = SplayTreeMap<int, Map<String, int>>();
+
+      yearData.forEach((month, monthData) {
+        Worksheet sheet = workbook.worksheets.addWithName('$year-$month');
+        sheet.setColumnWidthInPixels(1, 150);
+
+        List<String> lessons = [];
+
+        for (List<Data> incomesLessonDataset in monthData.values) {
+          for (Data incomesLessonData in incomesLessonDataset) {
+            if (!lessons.contains(incomesLessonData.type)) {
+              sheet.getRangeByIndex(2 + lessons.length, 1).setText(incomesLessonData.type);
+              lessons.add(incomesLessonData.type);
+            }
+          }
+        }
+
+        int index = 0;
+        monthData.forEach((day, dayData) {
+          Range range = sheet.getRangeByIndex(1, 2 + index);
+          range.setText('$day/$month');
+          range.cellStyle = style;
+
+          for (int i = 0; i < lessons.length; i++) {
+            for (Data data in dayData) {
+              if (sheet.getRangeByIndex(2 + i, 1).getText() == data.type) {
+                Range range = sheet.getRangeByIndex(2 + i, 2 + index);
+                range.setNumber(data.amount.toDouble());
+                range.cellStyle = style;
+              }
+            }
+          }
+
+          index++;
+        });
+
+        // sum all data
+        Range range = sheet.getRangeByIndex(3 + lessons.length, 2);
+        range.setText(AppLocalizations.of(context)!.total);
+        range.cellStyle = style;
+        for (int i = 0; i < lessons.length; i++) {
+          int rowIndex = 4 + lessons.length + i;
+          sheet.getRangeByIndex(rowIndex, 1).setText(lessons[i]);
+
+          Range range = sheet.getRangeByIndex(rowIndex, 2);
+          range.setFormula('=SUM(B${2 + i}:${String.fromCharCode(65 + monthData.length)}${2 + i})');
+          range.cellStyle = style;
+
+          if (!dataPosition.containsKey(month)) {
+            dataPosition[month] = {};
+          }
+
+          dataPosition[month]![lessons[i]] = rowIndex;
+        }
+      });
+
+      List<String> lessons = [];
+
+      for (var map in dataPosition.values) {
+        for (String lesson in map.keys) {
+          if (!lessons.contains(lesson)) {
+            sheet.getRangeByIndex(2 + lessons.length, 1).setText(lesson);
+            lessons.add(lesson);
+          }
+        }
+      }
+
+      int index = 0;
+
+      dataPosition.forEach((month, position) {
+        Range range = sheet.getRangeByIndex(1, 2 + index);
+        range.setText('$year-$month');
+        range.cellStyle = style;
+
+        for (int i = 0; i < lessons.length; i++) {
+          for (String key in position.keys) {
+            if (sheet.getRangeByIndex(2 + i, 1).getText() == key) {
+              Range range = sheet.getRangeByIndex(2 + i, 2 + index);
+              range.setFormula('=$year-$month!B${position[key]}');
+              range.cellStyle = style;
+            }
+          }
+        }
+
+        index++;
+      });
+
+      // sum all data
+      Range range = sheet.getRangeByIndex(3 + lessons.length, 2);
+      range.setText(AppLocalizations.of(context)!.total);
+      range.cellStyle = style;
+      for (int i = 0; i < lessons.length; i++) {
+        int rowIndex = 4 + lessons.length + i;
+        sheet.getRangeByIndex(rowIndex, 1).setText(lessons[i]);
+
+        Range range = sheet.getRangeByIndex(rowIndex, 2);
+        range.setFormula('=SUM(B${2 + i}:${String.fromCharCode(65 + yearData.length)}${2 + i})');
+        range.cellStyle = style;
+      }
+    });
+
+    List<int> bytes = workbook.saveAsStream();
+    workbook.dispose();
+
+    String name =
+        '${dataset.length > 1 ? '${dataset.keys.first}~${dataset.keys.last}' : '${dataset.keys.first}'} ${AppLocalizations.of(context)!.records}';
+    if (kIsWeb) {
+      await FileSaver.instance.saveFile(name, Uint8List.fromList(bytes), 'xlsx', mimeType: MimeType.MICROSOFTEXCEL);
+    } else {
+      await FileSaver.instance.saveAs(name, Uint8List.fromList(bytes), 'xlsx', MimeType.MICROSOFTEXCEL);
+    }
+  }
 }
 
 class ThemeModel extends ChangeNotifier {
@@ -235,7 +386,7 @@ class ThemeModel extends ChangeNotifier {
           ? ThemeMode.dark
           : ThemeMode.light;
 
-  static const defaultColor = Color(0xFFFFCECE);
+  static const defaultColor = Color(0xFFEA9C9C);
 
   static Future<ThemeModel> read() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
