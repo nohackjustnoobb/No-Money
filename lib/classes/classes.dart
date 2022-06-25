@@ -268,13 +268,13 @@ class Records extends ChangeNotifier {
         Worksheet sheet = workbook.worksheets.addWithName('$year-$month');
         sheet.setColumnWidthInPixels(1, 150);
 
-        List<String> lessons = [];
+        List<String> types = [];
 
-        for (List<Data> incomesLessonDataset in monthData.values) {
-          for (Data incomesLessonData in incomesLessonDataset) {
-            if (!lessons.contains(incomesLessonData.type)) {
-              sheet.getRangeByIndex(2 + lessons.length, 1).setText(incomesLessonData.type);
-              lessons.add(incomesLessonData.type);
+        for (List<Data> dataList in monthData.values) {
+          for (Data data in dataList) {
+            if (!types.contains(data.type)) {
+              sheet.getRangeByIndex(2 + types.length, 1).setText(data.type);
+              types.add(data.type);
             }
           }
         }
@@ -285,7 +285,7 @@ class Records extends ChangeNotifier {
           range.setText('$day/$month');
           range.cellStyle = style;
 
-          for (int i = 0; i < lessons.length; i++) {
+          for (int i = 0; i < types.length; i++) {
             for (Data data in dayData) {
               if (sheet.getRangeByIndex(2 + i, 1).getText() == data.type) {
                 Range range = sheet.getRangeByIndex(2 + i, 2 + index);
@@ -299,32 +299,34 @@ class Records extends ChangeNotifier {
         });
 
         // sum all data
-        Range range = sheet.getRangeByIndex(3 + lessons.length, 2);
+        Range range = sheet.getRangeByIndex(3 + types.length, 2);
         range.setText(AppLocalizations.of(context)!.total);
         range.cellStyle = style;
-        for (int i = 0; i < lessons.length; i++) {
-          int rowIndex = 4 + lessons.length + i;
-          sheet.getRangeByIndex(rowIndex, 1).setText(lessons[i]);
+        for (int i = 0; i <= types.length; i++) {
+          int rowIndex = 4 + types.length + i;
+          sheet.getRangeByIndex(rowIndex, 1).setText(i == types.length ? AppLocalizations.of(context)!.all : types[i]);
 
           Range range = sheet.getRangeByIndex(rowIndex, 2);
-          range.setFormula('=SUM(B${2 + i}:${String.fromCharCode(65 + monthData.length)}${2 + i})');
+          range.setFormula(i == types.length
+              ? '=SUM(B${4 + types.length}:B${3 + types.length * 2})'
+              : '=SUM(B${2 + i}:${String.fromCharCode(65 + monthData.length)}${2 + i})');
           range.cellStyle = style;
 
-          if (!dataPosition.containsKey(month)) {
-            dataPosition[month] = {};
-          }
+          if (i == types.length) continue;
 
-          dataPosition[month]![lessons[i]] = rowIndex;
+          if (!dataPosition.containsKey(month)) dataPosition[month] = {};
+
+          dataPosition[month]![types[i]] = rowIndex;
         }
       });
 
-      List<String> lessons = [];
+      List<String> types = [];
 
       for (var map in dataPosition.values) {
         for (String lesson in map.keys) {
-          if (!lessons.contains(lesson)) {
-            sheet.getRangeByIndex(2 + lessons.length, 1).setText(lesson);
-            lessons.add(lesson);
+          if (!types.contains(lesson)) {
+            sheet.getRangeByIndex(2 + types.length, 1).setText(lesson);
+            types.add(lesson);
           }
         }
       }
@@ -336,11 +338,11 @@ class Records extends ChangeNotifier {
         range.setText('$year-$month');
         range.cellStyle = style;
 
-        for (int i = 0; i < lessons.length; i++) {
+        for (int i = 0; i < types.length; i++) {
           for (String key in position.keys) {
             if (sheet.getRangeByIndex(2 + i, 1).getText() == key) {
               Range range = sheet.getRangeByIndex(2 + i, 2 + index);
-              range.setFormula('=$year-$month!B${position[key]}');
+              range.setFormula("='$year-$month'" '!B${position[key]}');
               range.cellStyle = style;
             }
           }
@@ -349,16 +351,17 @@ class Records extends ChangeNotifier {
         index++;
       });
 
-      // sum all data
-      Range range = sheet.getRangeByIndex(3 + lessons.length, 2);
+      Range range = sheet.getRangeByIndex(3 + types.length, 2);
       range.setText(AppLocalizations.of(context)!.total);
       range.cellStyle = style;
-      for (int i = 0; i < lessons.length; i++) {
-        int rowIndex = 4 + lessons.length + i;
-        sheet.getRangeByIndex(rowIndex, 1).setText(lessons[i]);
+      for (int i = 0; i <= types.length; i++) {
+        int rowIndex = 4 + types.length + i;
+        sheet.getRangeByIndex(rowIndex, 1).setText(i == types.length ? AppLocalizations.of(context)!.all : types[i]);
 
         Range range = sheet.getRangeByIndex(rowIndex, 2);
-        range.setFormula('=SUM(B${2 + i}:${String.fromCharCode(65 + yearData.length)}${2 + i})');
+        range.setFormula(i == types.length
+            ? '=SUM(B${4 + types.length}:B${3 + types.length * 2})'
+            : '=SUM(B${2 + i}:${String.fromCharCode(65 + yearData.length)}${2 + i})');
         range.cellStyle = style;
       }
     });

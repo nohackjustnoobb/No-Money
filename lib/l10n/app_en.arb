@@ -45,5 +45,6 @@
   "export": "Export",
   "total": "Total",
   "noRecord": "No Record",
-  "records": "Records"
+  "records": "Records",
+  "all": "All"
 }

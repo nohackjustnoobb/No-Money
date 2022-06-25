@@ -191,16 +191,21 @@ class Graph extends StatelessWidget {
                 legend: Legend(isVisible: true, position: LegendPosition.bottom),
                 annotations: <CircularChartAnnotation>[
                   CircularChartAnnotation(
+                      horizontalAlignment: ChartAlignment.center,
+                      verticalAlignment: ChartAlignment.center,
                       widget: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(AppLocalizations.of(context)!.total),
-                      Text(
-                        '\$$total',
-                        style: TextStyle(color: Theme.of(context).secondaryHeaderColor.withOpacity(.7)),
-                      )
-                    ],
-                  ))
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.total,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '\$$total',
+                            style: TextStyle(color: Theme.of(context).secondaryHeaderColor.withOpacity(.7)),
+                          )
+                        ],
+                      ))
                 ],
                 series: <CircularSeries>[
                   DoughnutSeries<Data, String>(

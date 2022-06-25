@@ -45,5 +45,6 @@
   "export": "輸出",
   "total": "總額",
   "noRecord": "沒有記錄",
-  "records": "記錄"
+  "records": "記錄",
+  "all": "全部"
 }
